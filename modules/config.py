@@ -18,7 +18,6 @@ DATA_PATHS = {
 
 # ==================== SEMANTIC MODEL ====================
 SEMANTIC_MODEL_NAME = 'all-MiniLM-L6-v2'
-ENABLE_SEMANTIC_SEARCH = False
 
 # ==================== VECTORIZER SETTINGS ====================
 VECTORIZER_CONFIG = {
