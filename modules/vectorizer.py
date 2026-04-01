@@ -1,6 +1,6 @@
 import logging
 from sklearn.feature_extraction.text import TfidfVectorizer
-from modules.search_engine import get_semantic_model
+from modules.search_engine import get_semantic_model, is_semantic_enabled
 from modules.config import VECTORIZER_CONFIG, SEMANTIC_MODEL_NAME, LOGGING_CONFIG
 
 # Setup logging
@@ -26,11 +26,17 @@ def create_vectorizer(corpus):
         tfidf_vectors = vectorizer.fit_transform(corpus)
         logger.info(f"Created TF-IDF vectors: {tfidf_vectors.shape}")
 
-        # Create semantic embeddings using singleton model
-        semantic_model = get_semantic_model()
-        logger.info("Encoding corpus with semantic model...")
-        semantic_vectors = semantic_model.encode(corpus, show_progress_bar=True)
-        logger.info(f"Created semantic vectors: {semantic_vectors.shape}")
+        semantic_vectors = None
+        if is_semantic_enabled():
+            semantic_model = get_semantic_model()
+            if semantic_model is not None:
+                logger.info("Encoding corpus with semantic model...")
+                semantic_vectors = semantic_model.encode(corpus, show_progress_bar=True)
+                logger.info(f"Created semantic vectors: {semantic_vectors.shape}")
+            else:
+                logger.warning("Semantic model unavailable; skipping semantic vectors.")
+        else:
+            logger.info("Semantic search disabled; skipping semantic vectors.")
 
         return vectorizer, tfidf_vectors, semantic_vectors
         
@@ -49,8 +55,16 @@ def create_semantic_vectors(corpus):
     Returns:
         Semantic vectors (numpy array)
     """
+    if not is_semantic_enabled():
+        logger.warning("Semantic search disabled; create_semantic_vectors returning None.")
+        return None
+
     try:
         semantic_model = get_semantic_model()
+        if semantic_model is None:
+            logger.warning("Semantic model unavailable; create_semantic_vectors returning None.")
+            return None
+
         logger.info(f"Creating semantic vectors for {len(corpus)} documents")
         vectors = semantic_model.encode(corpus, show_progress_bar=True)
         return vectors

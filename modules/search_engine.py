@@ -3,9 +3,16 @@ import pickle
 import logging
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
+
+try:
+    from sentence_transformers import SentenceTransformer
+    _sentence_transformers_available = True
+except ImportError:
+    _sentence_transformers_available = False
+
 from modules.config import (
     SEMANTIC_MODEL_NAME,
+    ENABLE_SEMANTIC_SEARCH,
     DATA_PATHS,
     SEARCH_CONFIG,
     SEARCH_SCORE_BOOSTS,
@@ -22,14 +29,28 @@ logger = logging.getLogger(__name__)
 _semantic_model = None
 _semantic_vectors = None
 
+def is_semantic_enabled():
+    return ENABLE_SEMANTIC_SEARCH and _sentence_transformers_available
+
+
 def get_semantic_model():
     global _semantic_model
+    if not is_semantic_enabled():
+        if not ENABLE_SEMANTIC_SEARCH:
+            logger.info("Semantic search is disabled by config.")
+        else:
+            logger.warning("SentenceTransformers is not installed; semantic search disabled.")
+        return None
+
     if _semantic_model is None:
         logger.info(f"Loading semantic model: {SEMANTIC_MODEL_NAME}")
         _semantic_model = SentenceTransformer(SEMANTIC_MODEL_NAME)
     return _semantic_model
 
 def get_semantic_vectors():
+    if not is_semantic_enabled():
+        return None
+
     global _semantic_vectors
     if _semantic_vectors is None:
         try:
@@ -41,8 +62,6 @@ def get_semantic_vectors():
         except Exception as e:
             logger.error(f"Error loading semantic vectors: {e}")
     return _semantic_vectors
-
-semantic_model = get_semantic_model()
 
 
 def normalize_text(text):
@@ -176,9 +195,13 @@ def search(query, vectorizer, vectors, metadata, top_k=None, search_type="all", 
 
         # 🔹 Semantic similarity
         semantic_vectors = get_semantic_vectors()
-        query_embedding = semantic_model.encode([query_clean])
-        
-        if semantic_vectors is not None:
+        query_embedding = None
+        if is_semantic_enabled():
+            semantic_model = get_semantic_model()
+            if semantic_model is not None:
+                query_embedding = semantic_model.encode([query_clean])
+
+        if semantic_vectors is not None and query_embedding is not None:
             # Ensure semantic_vectors has same length as tfidf_similarities
             if len(semantic_vectors) < len(tfidf_similarities):
                 # Pad with zeros if we have fewer semantic vectors than TF-IDF vectors
@@ -186,14 +209,14 @@ def search(query, vectorizer, vectors, metadata, top_k=None, search_type="all", 
                 zero_padding = np.zeros((padding_size, semantic_vectors.shape[1] if hasattr(semantic_vectors, 'shape') else query_embedding.shape[1]))
                 semantic_vectors = np.vstack([semantic_vectors, zero_padding])
                 logger.warning(f"Padded semantic vectors from {len(semantic_vectors)-padding_size} to {len(semantic_vectors)}")
-            
+
             semantic_similarities = cosine_similarity(query_embedding, semantic_vectors).flatten()
             similarities = (SEARCH_CONFIG["tfidf_weight"] * tfidf_similarities + 
                           SEARCH_CONFIG["semantic_weight"] * semantic_similarities)
             logger.debug("Using hybrid TF-IDF + semantic search")
         else:
             similarities = tfidf_similarities
-            logger.warning("Semantic vectors not available, using TF-IDF only")
+            logger.warning("Semantic search disabled or unavailable; using TF-IDF only")
 
         intent = detect_query_intent(query)
         core_query = extract_core_query(query)

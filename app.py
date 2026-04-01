@@ -198,7 +198,8 @@ def upload():
             # Note: We need to associate vectors with chunks correctly
             # For now, store in order as they were created
             VectorManager.add_tfidf_vectors(chunk_ids, vectors[-len(chunk_ids):])
-            VectorManager.add_semantic_vectors(chunk_ids, semantic_vectors[-len(chunk_ids):])
+            if semantic_vectors is not None:
+                VectorManager.add_semantic_vectors(chunk_ids, semantic_vectors[-len(chunk_ids):])
 
             # Log to audit trail
             AuditManager.log_action(
