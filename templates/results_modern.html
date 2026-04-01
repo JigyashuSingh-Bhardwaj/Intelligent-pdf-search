@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - PDF Search Engine</title>
+    <meta name="theme-color" content="#000000">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='modern-style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="nav-logo">📚 PDF Search</div>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/#upload">Upload</a></li>
+                <li><a href="/#search">New Search</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Search Header -->
+        <section>
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Results</p>
+                    <h2>{{ query }}</h2>
+                </div>
+                <a href="/" class="btn btn-secondary">← Back to Search</a>
+            </div>
+        </section>
+
+        <!-- Answer Section -->
+        {% if answer %}
+            <section>
+                <div class="answer-box">
+                    <span class="answer-label">🤖 AI Generated Answer</span>
+                    <div class="answer-text" style="white-space: pre-wrap; word-wrap: break-word;">{{ answer }}</div>
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- Results Section -->
+        {% if results %}
+            <section>
+                <div class="section-heading">
+                    <div>
+                        <p class="section-kicker">Retrieved Documents</p>
+                        <h2>{{ results | length }} Result{{ 's' if results | length != 1 else '' }} Found</h2>
+                    </div>
+                    <span class="results-count">Ranked by relevance</span>
+                </div>
+
+                {% for result in results %}
+                    <div class="result-item fade-in">
+                        <div style="display: flex; gap: var(--spacing-lg); align-items: flex-start;">
+                            <span class="result-rank">#{{ loop.index }}</span>
+                            <div style="flex: 1;">
+                                <h3>{{ result.subject }}</h3>
+                                <p class="text-sm text-muted">
+                                    From: <strong>{{ result.document }}</strong>
+                                    {% if result.score %}
+                                        <span class="result-score">Relevance: {{ "%.0f" | format(result.score * 100) }}%</span>
+                                    {% endif %}
+                                </p>
+
+                                <div class="result-content">
+                                    {{ result.chunk }}
+                                </div>
+
+                                <div class="result-source">
+                                    <span class="source-badge">{{ result.type }}</span>
+                                    <span class="source-badge">{{ result.subject }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </section>
+        {% else %}
+            <section>
+                <div class="card">
+                    <div class="empty-state">
+                        <span class="empty-state-icon">🔍</span>
+                        <h3>No results found</h3>
+                        <p>Try different keywords or upload more documents to expand your knowledge base.</p>
+                        <div style="margin-top: var(--spacing-lg); display: flex; gap: var(--spacing-md); justify-content: center;">
+                            <a href="/" class="btn btn-primary">Try Different Search</a>
+                            <a href="/#upload" class="btn btn-secondary">Upload More Docs</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- New Search Section -->
+        <section style="margin-top: var(--spacing-2xl); padding-top: var(--spacing-2xl); border-top: 1px solid var(--gray-200);">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Try Again</p>
+                    <h2>New Search</h2>
+                </div>
+            </div>
+
+            <div class="card">
+                <form action="/search" method="POST" class="card-body">
+                    <div class="form-group">
+                        <label for="query">Your Question</label>
+                        <textarea id="query" name="query" placeholder="Ask another question..." required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="search_type">Search In</label>
+                            <select id="search_type" name="search_type">
+                                <option value="all">All Documents</option>
+                                <option value="notes">Notes Only</option>
+                                <option value="pyq">Questions Only</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject_filter">Filter by Subject</label>
+                            <select id="subject_filter" name="subject_filter">
+                                <option value="all">All Subjects</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary btn-lg">Search Again</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Auto-fill previous query (optional)
+        const queryInput = document.getElementById('query');
+        if (queryInput) {
+            // You can prefill with the current query if needed
+        }
+    </script>
+</body>
+</html>

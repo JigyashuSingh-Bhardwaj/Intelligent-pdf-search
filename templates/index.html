@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Academic Search Engine</title>
+    <meta name="theme-color" content="#1976D2">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="bg-orb orb-one"></div>
+    <div class="bg-orb orb-two"></div>
+
+    <main class="page-shell">
+
+        <header class="hero-banner">
+            <div class="hero-content">
+                <p class="hero-chip">Minor Project • BTech IT</p>
+                <h1>Intelligent Academic Search Engine</h1>
+                <p class="hero-subtitle">
+                    A personalized academic retrieval and answer generation system for notes,
+                    personal PDFs, and previous year question papers.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="#search-panel" class="secondary-btn">Start Searching</a>
+                    <a href="#upload-panel" class="ghost-btn">Upload Documents</a>
+                </div>
+            </div>
+
+            <div class="hero-side">
+                <div class="hero-badge-card">
+                    <span class="hero-badge-label">System Ready</span>
+                    <strong>{{ stats.total_documents }}</strong>
+                    <small>documents indexed</small>
+                </div>
+
+                <div class="hero-mini-card">
+                    <span class="mini-card-kicker">Core Capability</span>
+                    <p>Semantic retrieval + answer generation for academic PDFs.</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="stats-section">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Dashboard</p>
+                    <h2>System Overview</h2>
+                </div>
+                <p>Current indexed academic content available for retrieval and answer generation.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <span class="stat-label">Total Chunks</span>
+                    <h3>{{ stats.total_chunks }}</h3>
+                    <p>Searchable content segments created from uploaded PDFs.</p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📄</div>
+                    <span class="stat-label">Total Documents</span>
+                    <h3>{{ stats.total_documents }}</h3>
+                    <p>Unique uploaded files currently available in the system.</p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🏷️</div>
+                    <span class="stat-label">Document Types</span>
+                    <h3>
+                        {% if stats.doc_types %}
+                            {{ stats.doc_types | length }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h3>
+                    <p>
+                        {% if stats.doc_types %}
+                            {{ stats.doc_types | join(', ') }}
+                        {% else %}
+                            No documents uploaded yet
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🎓</div>
+                    <span class="stat-label">Subjects</span>
+                    <h3>
+                        {% if stats.subjects %}
+                            {{ stats.subjects | length }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h3>
+                    <p>
+                        {% if stats.subjects %}
+                            {{ stats.subjects | join(', ') }}
+                        {% else %}
+                            No subjects available
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="workspace-grid">
+            <div class="panel" id="upload-panel">
+                <div class="panel-header">
+                    <p class="section-kicker">Input Module</p>
+                    <h2>Upload PDF</h2>
+                    <p>Add notes or PYQs to build your personal academic knowledge base.</p>
+                </div>
+
+                <form action="/upload" method="POST" enctype="multipart/form-data" class="form-grid">
+                    <div class="form-group">
+                        <label for="pdf">Choose PDF File</label>
+
+                        <label for="pdf" class="file-dropzone">
+                            <span class="file-drop-icon">⬆</span>
+                            <span class="file-drop-title">Click to browse PDF</span>
+                            <span class="file-drop-subtitle">Upload notes or previous year question papers</span>
+                            <span class="file-name" id="file-name">No file selected yet</span>
+                        </label>
+
+                        <input id="pdf" type="file" name="pdf" accept=".pdf" required class="file-input-hidden">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="doc_type">Document Type</label>
+                        <select id="doc_type" name="doc_type" required>
+                            <option value="notes">Notes</option>
+                            <option value="pyq">PYQ</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <input id="subject" type="text" name="subject" placeholder="Example: Computer Networks" required>
+                    </div>
+
+                    <button type="submit" class="primary-btn">Upload and Index PDF</button>
+                </form>
+            </div>
+
+            <div class="panel" id="search-panel">
+                <div class="panel-header">
+                    <p class="section-kicker">Retrieval Module</p>
+                    <h2>Search / Answer Mode</h2>
+                    <p>Ask a natural language query and retrieve a fuller student-friendly answer.</p>
+                </div>
+
+                <form action="/search" method="POST" class="form-grid">
+                    <div class="form-group">
+                        <label for="query">Enter Query</label>
+                        <input id="query" type="text" name="query" placeholder="Example: Explain OSI model layers" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="search_type">Search In</label>
+                            <select id="search_type" name="search_type">
+                                <option value="all">All Documents</option>
+                                <option value="notes">Notes Only</option>
+                                <option value="pyq">PYQ Only</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject_filter">Subject Filter</label>
+                            <select id="subject_filter" name="subject_filter">
+                                <option value="all">All Subjects</option>
+                                {% for subject in stats.subjects %}
+                                    <option value="{{ subject }}">{{ subject }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="primary-btn">Search and Generate Answer</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="documents-section">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Knowledge Base</p>
+                    <h2>Uploaded Documents</h2>
+                </div>
+                <p>Documents currently contributing to retrieval and answer generation.</p>
+            </div>
+
+            <div class="panel">
+                {% if stats.documents %}
+                    <div class="doc-grid">
+                        {% for doc in stats.documents %}
+                            <article class="doc-card">
+                                <div class="doc-icon">📄</div>
+                                <div class="doc-content">
+                                    <h3>{{ doc.document }}</h3>
+                                    <div class="tag-row">
+                                        <span class="tag">Type: {{ doc.type }}</span>
+                                        <span class="tag">Subject: {{ doc.subject }}</span>
+                                    </div>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📂</div>
+                        <h3>No documents uploaded yet</h3>
+                        <p>Upload notes or PYQ PDFs to start building your personalized search system.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="danger-section">
+            <div class="panel danger-panel">
+                <div class="panel-header">
+                    <p class="section-kicker warning-kicker">Danger Zone</p>
+                    <h2>Clear Indexed Data</h2>
+                    <p>
+                        This removes stored metadata, vectors, and indexed search data from the system.
+                    </p>
+                </div>
+
+                <form action="/clear" method="POST" onsubmit="return confirm('Are you sure you want to clear all indexed data?');">
+                    <button type="submit" class="danger-btn">Clear All Indexed Data</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const fileInput = document.getElementById('pdf');
+        const fileName = document.getElementById('file-name');
+
+        if (fileInput && fileName) {
+            fileInput.addEventListener('change', function () {
+                if (this.files && this.files.length > 0) {
+                    fileName.textContent = this.files[0].name;
+                } else {
+                    fileName.textContent = 'No file selected yet';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - Intelligent Academic Search Engine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="page-shell">
+
+        <section class="results-hero">
+            <div>
+                <p class="eyebrow dark-eyebrow">Search Results</p>
+                <h1 class="results-title">Retrieved Academic Content</h1>
+                <p class="results-subtitle">
+                    The system searched your uploaded notes and PYQs, ranked relevant chunks,
+                    and generated a student-friendly answer from the strongest matches.
+                </p>
+            </div>
+            <a href="/" class="secondary-btn">⬅ Back to Home</a>
+        </section>
+
+        <section class="stats-section">
+            <div class="summary-grid">
+                <div class="summary-card clean-card">
+                    <span class="summary-label">Query</span>
+                    <h3>{{ query }}</h3>
+                    <p>Your natural language academic search query.</p>
+                </div>
+
+                <div class="summary-card clean-card">
+                    <span class="summary-label">Search Type</span>
+                    <h3>{{ search_type }}</h3>
+                    <p>Selected document type filter used during retrieval.</p>
+                </div>
+
+                <div class="summary-card clean-card">
+                    <span class="summary-label">Subject Filter</span>
+                    <h3>{{ subject_filter }}</h3>
+                    <p>Selected subject constraint used during search.</p>
+                </div>
+
+                <div class="summary-card clean-card">
+                    <span class="summary-label">Total Results</span>
+                    <h3>{{ results|length }}</h3>
+                    <p>Top retrieved supporting chunks returned by the system.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="answer-section">
+            <div class="section-heading">
+                <h2>Generated Answer</h2>
+                <p>Answer built from the most relevant retrieved chunks in your uploaded academic material.</p>
+            </div>
+
+            <div class="answer-panel">
+                <div class="answer-panel-header">
+                    <span class="answer-chip">Answer Mode</span>
+                </div>
+                <div class="answer-text">
+                    <pre>{{ answer }}</pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="documents-section">
+            <div class="section-heading">
+                <h2>Supporting Retrieved Chunks</h2>
+                <p>These ranked chunks were used as the evidence base for retrieval and answer construction.</p>
+            </div>
+
+            {% if results %}
+                <div class="results-list">
+                    {% for r in results %}
+                        <article class="result-card-v2">
+                            <div class="result-top">
+                                <div>
+                                    <p class="result-kicker">Result #{{ loop.index }}</p>
+                                    <h3 class="result-heading">{{ r.document }}</h3>
+                                </div>
+                                <div class="score-pill">
+                                    Score: {{ "%.2f"|format(r.score) }}
+                                </div>
+                            </div>
+
+                            <div class="tag-row result-tags">
+                                <span class="tag">🏷 {{ r.type }}</span>
+                                <span class="tag">📚 {{ r.subject }}</span>
+                                <span class="tag">📄 Page {{ r.page }}</span>
+                            </div>
+
+                            <div class="chunk-panel">
+                                {{ r.chunk }}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state panel">
+                    <h3>No relevant results found</h3>
+                    <p>The system could not find strong supporting chunks for this query in the uploaded documents.</p>
+                </div>
+            {% endif %}
+        </section>
+
+    </div>
+</body>
+</html>

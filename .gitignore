@@ -1,0 +1,37 @@
+# Python virtual environment
+venv/
+.env/
+.env.*
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# SQLite and data artifacts
+data/
+*.db
+*.sqlite
+metadata.pkl
+vectors.pkl
+tfidf_vectorizer.pkl
+semantic_vectors.pkl
+
+# Uploads and generated files
+uploads/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
