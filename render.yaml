@@ -2,8 +2,9 @@ services:
   - type: web
     name: intelligent-pdf-search
     env: python
+    pythonVersion: 3.11
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
     startCommand: waitress-serve --listen=0.0.0.0:$PORT app:app
     envVars:
       - key: PYTHONUNBUFFERED
