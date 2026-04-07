@@ -108,15 +108,16 @@ class DocumentManager:
                 cursor.execute("DELETE FROM chunks WHERE document_id = ?", (doc_id,))
                 logger.debug(f"Deleted chunks for document {doc_id}")
                 
-                # 4. Delete document
-                cursor.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
-                logger.debug(f"Deleted document {doc_id}")
-                
-                # Log to audit trail
+                # Log to audit trail before removing the document row
                 cursor.execute("""
                     INSERT INTO audit_log (action, document_id, details)
                     VALUES (?, ?, ?)
                 """, ("document_deleted", doc_id, "Document permanently deleted"))
+                logger.debug(f"Logged document deletion for {doc_id}")
+                
+                # 4. Delete document
+                cursor.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
+                logger.debug(f"Deleted document {doc_id}")
                 
             logger.info(f"Document deleted: {doc_id}")
             return True

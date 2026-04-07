@@ -77,29 +77,29 @@ def detect_query_type(query):
 
 def get_system_stats():
     metadata = load_metadata_safe()
+    documents = DocumentManager.get_all_documents()
 
     total_chunks = len(metadata)
+    doc_types = sorted({doc.get("type", "unknown") for doc in documents})
+    subjects = sorted({doc.get("subject", "General") for doc in documents})
 
-    unique_documents = {}
-    doc_types = set()
-    subjects = set()
-
-    for item in metadata:
-        doc_name = item.get("document", "Unknown")
-        unique_documents[doc_name] = {
-            "document": doc_name,
-            "type": item.get("type", "unknown"),
-            "subject": item.get("subject", "General")
+    docs = [
+        {
+            "id": doc.get("id"),
+            "filename": doc.get("filename"),
+            "type": doc.get("type", "unknown"),
+            "subject": doc.get("subject", "General"),
+            "total_chunks": doc.get("total_chunks", 0)
         }
-        doc_types.add(item.get("type", "unknown"))
-        subjects.add(item.get("subject", "General"))
+        for doc in documents
+    ]
 
     return {
         "total_chunks": total_chunks,
-        "total_documents": len(unique_documents),
-        "documents": list(unique_documents.values()),
-        "doc_types": sorted(list(doc_types)),
-        "subjects": sorted(list(subjects))
+        "total_documents": len(documents),
+        "documents": docs,
+        "doc_types": doc_types,
+        "subjects": subjects
     }
 
 
@@ -313,6 +313,39 @@ def search_route():
     except Exception as e:
         logger.error(f"Search error: {e}", exc_info=True)
         return f"<h3>❌ Error: {str(e)}</h3>"
+
+
+@app.route("/delete_document", methods=["POST"])
+def delete_document():
+    try:
+        doc_id = request.form.get("doc_id")
+        if not doc_id or not doc_id.isdigit():
+            logger.warning("Invalid document delete request")
+            return redirect(url_for('home'))
+
+        doc_id = int(doc_id)
+        document = DocumentManager.get_document(doc_id)
+        if not document:
+            logger.warning(f"Document not found for deletion: {doc_id}")
+            return redirect(url_for('home'))
+
+        filename = document.get("filename")
+        deleted = DocumentManager.delete_document(doc_id)
+        if deleted:
+            if filename:
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    logger.info(f"Deleted uploaded file: {file_path}")
+
+            logger.info(f"Deleted document {doc_id} ({filename})")
+        else:
+            logger.error(f"Failed to delete document {doc_id} ({filename})")
+
+        return redirect(url_for('home'))
+    except Exception as e:
+        logger.error(f"Delete document error: {e}", exc_info=True)
+        return redirect(url_for('home'))
 
 
 @app.route("/clear", methods=["POST"])

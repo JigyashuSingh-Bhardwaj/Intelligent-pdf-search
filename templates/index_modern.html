@@ -195,8 +195,16 @@
                 <div class="grid grid-3">
                     {% for doc in stats.documents %}
                         <div class="doc-card">
-                            <span class="doc-icon">📄</span>
-                            <h3>{{ doc.document }}</h3>
+                            <div class="doc-card-header">
+                                <span class="doc-icon">📄</span>
+                                <div class="doc-card-title">
+                                    <h3>{{ doc.filename }}</h3>
+                                    <form action="/delete_document" method="POST" onsubmit="return confirm('Delete this document permanently?');">
+                                        <input type="hidden" name="doc_id" value="{{ doc.id }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
                             <p class="text-sm text-muted">Uploaded recently</p>
                             <div class="doc-meta">
                                 <span class="tag">{{ doc.type }}</span>

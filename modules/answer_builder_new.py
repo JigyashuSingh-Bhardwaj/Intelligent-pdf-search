@@ -65,6 +65,10 @@ def detect_query_intent(query):
         return "list"
     if any(w in q for w in ANSWER_KEYWORDS["definition_words"]):
         return "definition"
+    
+    # Detect topology-related queries
+    if any(w in q for w in ["topology", "structure", "architecture"]):
+        return "topology"
 
     return "general"
 
@@ -82,6 +86,24 @@ def is_definition_like(sentence, concept):
     ]
 
     return any(p in s for p in patterns)
+
+
+def is_advantages_sentence(sentence):
+    s = sentence.lower()
+    advantages_keywords = ["advantage", "benefit", "beneficial", "easy", "suitable", "good", "efficient", "effective"]
+    return any(kw in s for kw in advantages_keywords)
+
+
+def is_disadvantages_sentence(sentence):
+    s = sentence.lower()
+    disadvantages_keywords = ["disadvantage", "drawback", "limitation", "problem", "difficult", "hard", "inefficient", "susceptible"]
+    return any(kw in s for kw in disadvantages_keywords)
+
+
+def is_expansion_sentence(sentence):
+    s = sentence.lower()
+    expansion_keywords = ["expand", "cable", "connect", "join", "growth", "scalable", "extend"]
+    return any(kw in s for kw in expansion_keywords)
 
 
 def is_layer_sentence(sentence):
@@ -108,6 +130,17 @@ def score_sentence(sentence, base_score, concept, intent):
     if concept in s:
         score += ANSWER_CONFIG["concept_presence_boost"]
 
+    # Topology-specific scoring
+    if intent == "topology":
+        if is_definition_like(sentence, concept):
+            score += 1.5  # Boost definitions
+        if is_advantages_sentence(sentence):
+            score += 1.0
+        if is_disadvantages_sentence(sentence):
+            score += 1.0
+        if is_expansion_sentence(sentence):
+            score += 0.8
+
     # LIST INTENT
     if intent == "list":
         if is_layer_sentence(sentence):
@@ -124,10 +157,109 @@ def score_sentence(sentence, base_score, concept, intent):
     return score
 
 
-def format_answer(query, sentences):
+def categorize_sentence(sentence, concept, intent):
+    """Categorize sentences into logical groups"""
+    if intent == "topology":
+        if is_definition_like(sentence, concept):
+            return "definition"
+        elif is_advantages_sentence(sentence):
+            return "advantages"
+        elif is_disadvantages_sentence(sentence):
+            return "disadvantages"
+        elif is_expansion_sentence(sentence):
+            return "expansion"
+        else:
+            return "general"
+    elif intent == "definition":
+        return "definition"
+    elif intent == "list":
+        return "list"
+    else:
+        return "general"
+
+
+def format_topology_answer(query, categorized_sentences):
+    """Format topology-specific answers with organized sections"""
+    sections = {
+        "definition": [],
+        "expansion": [],
+        "advantages": [],
+        "disadvantages": [],
+        "general": []
+    }
+    
+    # Populate sections
+    for category, sentences in categorized_sentences.items():
+        if sentences and category in sections:
+            sections[category] = sentences[:2]  # Limit to 2 per section
+    
+    # Build answer
+    answer_parts = [f"**{query}**\n"]
+    
+    # Definition
+    if sections["definition"]:
+        answer_parts.append("**Definition:**")
+        for s in sections["definition"]:
+            answer_parts.append(f"- {s}")
+        answer_parts.append("")
+    
+    # Expansion characteristics
+    if sections["expansion"]:
+        answer_parts.append("**Expansion & Connectivity:**")
+        for s in sections["expansion"]:
+            answer_parts.append(f"- {s}")
+        answer_parts.append("")
+    
+    # Advantages
+    if sections["advantages"]:
+        answer_parts.append("**Advantages:**")
+        for s in sections["advantages"]:
+            answer_parts.append(f"- {s}")
+        answer_parts.append("")
+    
+    # Disadvantages
+    if sections["disadvantages"]:
+        answer_parts.append("**Disadvantages:**")
+        for s in sections["disadvantages"]:
+            answer_parts.append(f"- {s}")
+        answer_parts.append("")
+    
+    # General info
+    if sections["general"]:
+        answer_parts.append("**Additional Information:**")
+        for s in sections["general"]:
+            answer_parts.append(f"- {s}")
+        answer_parts.append("")
+    
+    answer_text = "\n".join(answer_parts)
+    answer_text += "\n(This answer is generated from your uploaded documents.)"
+    
+    return answer_text
+
+
+def format_answer(query, sentences, intent="general"):
     if not sentences:
         return "No proper answer could be generated."
 
+    # For topology queries, use structured format
+    if intent == "topology":
+        # Categorize sentences
+        categorized = {
+            "definition": [],
+            "expansion": [],
+            "advantages": [],
+            "disadvantages": [],
+            "general": []
+        }
+        
+        concept = extract_core_query(query)
+        for s in sentences:
+            category = categorize_sentence(s, concept, intent)
+            categorized[category].append(s)
+        
+        return format_topology_answer(query, categorized)
+    
+    # Default format
     answer = " ".join(sentences)
     answer = re.sub(r'\s+', ' ', answer)
 
@@ -137,6 +269,7 @@ def format_answer(query, sentences):
 def build_answer(query, results, max_sentences=None):
     """
     Build a coherent answer from search results using intelligent sentence selection
+    with enhanced categorization and formatting based on query intent.
     
     Args:
         query: Original search query
@@ -206,36 +339,71 @@ def build_answer(query, results, max_sentences=None):
 
         selected = []
 
-        # FORCE DEFINITION FIRST
-        if intent == "definition":
+        # Intent-specific selection logic
+        if intent == "topology":
+            # For topology: prioritize different categories
+            categories = {
+                "definition": [],
+                "expansion": [],
+                "advantages": [],
+                "disadvantages": [],
+                "general": []
+            }
+            
+            # Categorize ranked sentences
+            for s, sc in ranked:
+                category = categorize_sentence(s, concept, intent)
+                categories[category].append((s, sc))
+            
+            # Select from each category
+            for cat in ["definition", "expansion", "advantages", "disadvantages", "general"]:
+                for s, sc in categories[cat]:
+                    if len(selected) >= max_sentences * 2:  # Allow more variety
+                        break
+                    selected.append(s)
+            
+            selected = selected[:max_sentences * 2]
+        
+        elif intent == "definition":
+            # FORCE DEFINITION FIRST
             for s, sc in ranked:
                 if is_definition_like(s, concept) and not is_bad_sentence(s):
                     selected.append(s)
                     break
 
-        # FORCE LAYER LIST FIRST
-        if intent == "list":
+            # ADD SUPPORTING CLEAN SENTENCES
+            for s, sc in ranked:
+                if s in selected:
+                    continue
+                if is_bad_sentence(s):
+                    continue
+                selected.append(s)
+                if len(selected) >= max_sentences:
+                    break
+        
+        elif intent == "list":
+            # FORCE LAYER LIST FIRST
             for s, sc in ranked:
                 if is_layer_sentence(s):
                     selected.append(s)
                     break
 
-        # ADD SUPPORTING CLEAN SENTENCES
-        for s, sc in ranked:
-            if s in selected:
-                continue
-
-            if intent == "definition" and is_bad_sentence(s):
-                continue
-
-            if intent == "list":
+            # ADD SUPPORTING CLEAN SENTENCES
+            for s, sc in ranked:
+                if s in selected:
+                    continue
                 if any(tcp in s.lower() for tcp in ANSWER_KEYWORDS["tcp_keywords"]):
                     continue
-
-            selected.append(s)
-
-            if len(selected) >= max_sentences:
-                break
+                selected.append(s)
+                if len(selected) >= max_sentences:
+                    break
+        
+        else:
+            # General: just use ranked order
+            for s, sc in ranked:
+                selected.append(s)
+                if len(selected) >= max_sentences:
+                    break
 
         selected = remove_similar_sentences(selected)
         selected = selected[:max_sentences]
@@ -248,7 +416,7 @@ def build_answer(query, results, max_sentences=None):
             return "Could not generate answer from results."
 
         logger.info(f"Generated answer with {len(selected)} sentences for query: {query[:50]}")
-        return format_answer(query, selected)
+        return format_answer(query, selected, intent)
         
     except Exception as e:
         logger.error(f"Error in build_answer: {e}", exc_info=True)

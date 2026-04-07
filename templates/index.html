@@ -205,7 +205,13 @@
                             <article class="doc-card">
                                 <div class="doc-icon">📄</div>
                                 <div class="doc-content">
-                                    <h3>{{ doc.document }}</h3>
+                                    <div class="doc-card-row">
+                                        <h3>{{ doc.filename or doc.document }}</h3>
+                                        <form action="/delete_document" method="POST" onsubmit="return confirm('Delete this document permanently?');">
+                                            <input type="hidden" name="doc_id" value="{{ doc.id }}">
+                                            <button type="submit" class="danger-btn small-btn">Delete</button>
+                                        </form>
+                                    </div>
                                     <div class="tag-row">
                                         <span class="tag">Type: {{ doc.type }}</span>
                                         <span class="tag">Subject: {{ doc.subject }}</span>
