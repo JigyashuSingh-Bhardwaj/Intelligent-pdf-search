@@ -239,6 +239,29 @@ class VectorManager:
         except Exception as e:
             logger.error(f"Error storing TF-IDF vectors: {e}")
             return False
+
+    @staticmethod
+    def replace_all_tfidf_vectors(chunk_ids: List[int], vectors_data) -> bool:
+        """Replace all stored TF-IDF vectors with a fresh snapshot."""
+        try:
+            db = get_db()
+            dense_vectors = vectors_data.toarray() if hasattr(vectors_data, 'toarray') else vectors_data
+
+            with db.get_cursor() as cursor:
+                cursor.execute("DELETE FROM vectors")
+
+                for i, chunk_id in enumerate(chunk_ids):
+                    vector_bytes = pickle.dumps(dense_vectors[i])
+                    cursor.execute("""
+                        INSERT INTO vectors (chunk_id, vector_data)
+                        VALUES (?, ?)
+                    """, (chunk_id, vector_bytes))
+
+            logger.info(f"Replaced all TF-IDF vectors with {len(chunk_ids)} entries")
+            return True
+        except Exception as e:
+            logger.error(f"Error replacing TF-IDF vectors: {e}")
+            return False
     
     @staticmethod
     def add_semantic_vectors(chunk_ids: List[int], vectors_data) -> bool:
@@ -258,6 +281,28 @@ class VectorManager:
             return True
         except Exception as e:
             logger.error(f"Error storing semantic vectors: {e}")
+            return False
+
+    @staticmethod
+    def replace_all_semantic_vectors(chunk_ids: List[int], vectors_data) -> bool:
+        """Replace all stored semantic embeddings with a fresh snapshot."""
+        try:
+            db = get_db()
+
+            with db.get_cursor() as cursor:
+                cursor.execute("DELETE FROM semantic_vectors")
+
+                for i, chunk_id in enumerate(chunk_ids):
+                    embedding_bytes = pickle.dumps(vectors_data[i])
+                    cursor.execute("""
+                        INSERT INTO semantic_vectors (chunk_id, embedding)
+                        VALUES (?, ?)
+                    """, (chunk_id, embedding_bytes))
+
+            logger.info(f"Replaced all semantic vectors with {len(chunk_ids)} entries")
+            return True
+        except Exception as e:
+            logger.error(f"Error replacing semantic vectors: {e}")
             return False
     
     @staticmethod
@@ -352,6 +397,18 @@ class VectorizerManager:
             logger.error(f"Error retrieving vectorizer: {e}")
             return None
 
+    @staticmethod
+    def clear_vectorizers() -> bool:
+        """Remove all stored vectorizer snapshots."""
+        try:
+            db = get_db()
+            db.execute_update("DELETE FROM vectorizer_state")
+            logger.info("Cleared vectorizer state")
+            return True
+        except Exception as e:
+            logger.error(f"Error clearing vectorizer state: {e}")
+            return False
+
 
 class AuditManager:
     """Manage audit logging"""
@@ -416,4 +473,21 @@ class DataExportManager:
             return metadata
         except Exception as e:
             logger.error(f"Error exporting metadata: {e}")
+            return []
+
+    @staticmethod
+    def get_chunk_ids_in_order() -> List[int]:
+        """Get chunk ids in the same order as exported metadata."""
+        try:
+            db = get_db()
+            results = db.execute_query("""
+                SELECT c.id
+                FROM chunks c
+                JOIN documents d ON c.document_id = d.id
+                WHERE d.status = 'active'
+                ORDER BY c.id
+            """)
+            return [row["id"] for row in results]
+        except Exception as e:
+            logger.error(f"Error exporting chunk ids: {e}")
             return []

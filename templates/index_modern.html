@@ -14,10 +14,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='modern-style.css') }}">
 </head>
 <body>
-    <!-- Navigation -->
     <nav>
         <div class="nav-container">
-            <div class="nav-logo">📚 PDF Search</div>
+            <div class="nav-logo">PDF Search</div>
             <ul class="nav-links">
                 <li><a href="#upload">Upload</a></li>
                 <li><a href="#search">Search</a></li>
@@ -27,13 +26,12 @@
     </nav>
 
     <main>
-        <!-- Hero Section -->
         <section class="hero">
             <div class="hero-content">
-                <span class="hero-badge">✨ Academic Search Engine</span>
+                <span class="hero-badge">Academic Search Engine</span>
                 <h1>Search Your Knowledge</h1>
                 <p class="hero-subtitle">
-                    Intelligent retrieval and answer generation for your personal academic documents. 
+                    Intelligent retrieval and answer generation for your personal academic documents.
                     Upload PDFs, ask questions, get instant answers.
                 </p>
                 <div class="hero-actions">
@@ -43,7 +41,6 @@
             </div>
         </section>
 
-        <!-- Statistics Section -->
         <section>
             <div class="section-heading">
                 <div>
@@ -53,25 +50,25 @@
             </div>
             <div class="grid grid-4">
                 <div class="stat-card">
-                    <span class="stat-icon">📄</span>
+                    <span class="stat-icon">DOC</span>
                     <span class="stat-label">Documents</span>
                     <h3>{{ stats.total_documents }}</h3>
                     <p>Uploaded PDFs</p>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-icon">📑</span>
+                    <span class="stat-icon">CH</span>
                     <span class="stat-label">Total Chunks</span>
                     <h3>{{ stats.total_chunks }}</h3>
                     <p>Searchable segments</p>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-icon">🏷️</span>
+                    <span class="stat-icon">TY</span>
                     <span class="stat-label">Types</span>
                     <h3>{{ stats.doc_types|length if stats.doc_types else 0 }}</h3>
                     <p>Document types</p>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-icon">📚</span>
+                    <span class="stat-icon">SB</span>
                     <span class="stat-label">Subjects</span>
                     <h3>{{ stats.subjects|length if stats.subjects else 0 }}</h3>
                     <p>Knowledge areas</p>
@@ -79,7 +76,6 @@
             </div>
         </section>
 
-        <!-- Upload Section -->
         <section id="upload">
             <div class="section-heading">
                 <div>
@@ -99,7 +95,7 @@
                     <div class="form-group">
                         <label for="pdf">PDF File</label>
                         <label for="pdf" class="file-dropzone" id="dropzone">
-                            <span class="file-drop-icon">📤</span>
+                            <span class="file-drop-icon">UP</span>
                             <span class="file-drop-title">Click to upload or drag & drop</span>
                             <span class="file-drop-subtitle">PDF files up to 50MB</span>
                             <span class="file-name" id="file-name">No file selected</span>
@@ -111,10 +107,10 @@
                         <div class="form-group">
                             <label for="doc_type">Document Type</label>
                             <select id="doc_type" name="doc_type" required>
-                                <option value="notes">📝 Class Notes</option>
-                                <option value="pyq">❓ Previous Year Question</option>
-                                <option value="textbook">📖 Textbook Chapter</option>
-                                <option value="other">📄 Other</option>
+                                <option value="notes">Class Notes</option>
+                                <option value="pyq">Previous Year Question</option>
+                                <option value="textbook">Textbook Chapter</option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
 
@@ -131,7 +127,6 @@
             </div>
         </section>
 
-        <!-- Search Section -->
         <section id="search">
             <div class="section-heading">
                 <div>
@@ -182,7 +177,6 @@
             </div>
         </section>
 
-        <!-- Documents Section -->
         <section id="documents">
             <div class="section-heading">
                 <div>
@@ -196,7 +190,7 @@
                     {% for doc in stats.documents %}
                         <div class="doc-card">
                             <div class="doc-card-header">
-                                <span class="doc-icon">📄</span>
+                                <span class="doc-icon">PDF</span>
                                 <div class="doc-card-title">
                                     <h3>{{ doc.filename }}</h3>
                                     <form action="/delete_document" method="POST" onsubmit="return confirm('Delete this document permanently?');">
@@ -216,7 +210,7 @@
             {% else %}
                 <div class="card">
                     <div class="empty-state">
-                        <span class="empty-state-icon">📂</span>
+                        <span class="empty-state-icon">PDF</span>
                         <h3>No documents yet</h3>
                         <p>Upload your first PDF to start building your personal knowledge base.</p>
                         <a href="#upload" class="btn btn-primary mt-lg">Upload Now</a>
@@ -225,13 +219,12 @@
             {% endif %}
         </section>
 
-        <!-- Danger Zone -->
         <section>
             <div class="danger-zone">
-                <span class="danger-title">⚠️ Danger Zone</span>
+                <span class="danger-title">Danger Zone</span>
                 <h2>Clear All Data</h2>
                 <p>Remove all documents and indexed data from the system. This action cannot be undone.</p>
-                <form action="/clear" method="POST" onsubmit="return confirm('⚠️ Are you absolutely sure? This will delete ALL data permanently.');">
+                <form action="/clear" method="POST" onsubmit="return confirm('Are you absolutely sure? This will delete ALL data permanently.');">
                     <button type="submit" class="btn btn-danger btn-lg">Delete All Data</button>
                 </form>
             </div>
@@ -239,13 +232,11 @@
     </main>
 
     <script>
-        // File upload handling
         const fileInput = document.getElementById('pdf');
         const fileName = document.getElementById('file-name');
         const dropzone = document.getElementById('dropzone');
 
         if (fileInput && fileName && dropzone) {
-            // File input change
             fileInput.addEventListener('change', function() {
                 if (this.files && this.files.length > 0) {
                     fileName.textContent = this.files[0].name;
@@ -254,7 +245,6 @@
                 }
             });
 
-            // Drag and drop
             dropzone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 dropzone.classList.add('dragover');
@@ -274,9 +264,8 @@
             });
         }
 
-        // Smooth scroll behavior
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {

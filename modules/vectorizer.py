@@ -26,11 +26,15 @@ def create_vectorizer(corpus):
         tfidf_vectors = vectorizer.fit_transform(corpus)
         logger.info(f"Created TF-IDF vectors: {tfidf_vectors.shape}")
 
-        # Create semantic embeddings using singleton model
+        # Create semantic embeddings using singleton model when available.
         semantic_model = get_semantic_model()
-        logger.info("Encoding corpus with semantic model...")
-        semantic_vectors = semantic_model.encode(corpus, show_progress_bar=True)
-        logger.info(f"Created semantic vectors: {semantic_vectors.shape}")
+        if semantic_model is not None:
+            logger.info("Encoding corpus with semantic model...")
+            semantic_vectors = semantic_model.encode(corpus, show_progress_bar=True)
+            logger.info(f"Created semantic vectors: {semantic_vectors.shape}")
+        else:
+            logger.warning("Semantic model unavailable. Proceeding with TF-IDF vectors only.")
+            semantic_vectors = []
 
         return vectorizer, tfidf_vectors, semantic_vectors
         
@@ -51,6 +55,9 @@ def create_semantic_vectors(corpus):
     """
     try:
         semantic_model = get_semantic_model()
+        if semantic_model is None:
+            logger.warning("Semantic model unavailable. Skipping semantic vector creation.")
+            return []
         logger.info(f"Creating semantic vectors for {len(corpus)} documents")
         vectors = semantic_model.encode(corpus, show_progress_bar=True)
         return vectors

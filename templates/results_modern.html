@@ -13,10 +13,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='modern-style.css') }}">
 </head>
 <body>
-    <!-- Navigation -->
     <nav>
         <div class="nav-container">
-            <div class="nav-logo">📚 PDF Search</div>
+            <div class="nav-logo">PDF Search</div>
             <ul class="nav-links">
                 <li><a href="/">Home</a></li>
                 <li><a href="/#upload">Upload</a></li>
@@ -26,28 +25,25 @@
     </nav>
 
     <main>
-        <!-- Search Header -->
         <section>
             <div class="section-heading">
                 <div>
                     <p class="section-kicker">Results</p>
                     <h2>{{ query }}</h2>
                 </div>
-                <a href="/" class="btn btn-secondary">← Back to Search</a>
+                <a href="/" class="btn btn-secondary">Back to Search</a>
             </div>
         </section>
 
-        <!-- Answer Section -->
         {% if answer %}
             <section>
                 <div class="answer-box">
-                    <span class="answer-label">🤖 AI Generated Answer</span>
+                    <span class="answer-label">AI Generated Answer</span>
                     <div class="answer-text" style="white-space: pre-wrap; word-wrap: break-word;">{{ answer }}</div>
                 </div>
             </section>
         {% endif %}
 
-        <!-- Results Section -->
         {% if results %}
             <section>
                 <div class="section-heading">
@@ -88,7 +84,7 @@
             <section>
                 <div class="card">
                     <div class="empty-state">
-                        <span class="empty-state-icon">🔍</span>
+                        <span class="empty-state-icon">No Match</span>
                         <h3>No results found</h3>
                         <p>Try different keywords or upload more documents to expand your knowledge base.</p>
                         <div style="margin-top: var(--spacing-lg); display: flex; gap: var(--spacing-md); justify-content: center;">
@@ -100,7 +96,6 @@
             </section>
         {% endif %}
 
-        <!-- New Search Section -->
         <section style="margin-top: var(--spacing-2xl); padding-top: var(--spacing-2xl); border-top: 1px solid var(--gray-200);">
             <div class="section-heading">
                 <div>
@@ -143,10 +138,9 @@
     </main>
 
     <script>
-        // Auto-fill previous query (optional)
         const queryInput = document.getElementById('query');
         if (queryInput) {
-            // You can prefill with the current query if needed
+            // You can prefill with the current query if needed.
         }
     </script>
 </body>

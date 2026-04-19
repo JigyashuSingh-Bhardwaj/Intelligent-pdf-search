@@ -7,6 +7,3 @@ torch>=2.1.0
 waitress>=2.1.0
 nltk==3.9.1
 numpy==1.26.4
-e-transformers>=2.2.2
-torch>=2.1.0
-waitress>=2.1.0
